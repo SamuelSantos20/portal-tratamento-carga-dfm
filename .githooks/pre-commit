@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+if command -v py >/dev/null 2>&1; then
+  exec py -3 scripts/verificar_commit_confidencial.py
+elif command -v python3 >/dev/null 2>&1; then
+  exec python3 scripts/verificar_commit_confidencial.py
+else
+  echo "Python 3 necessario para verificar confidencialidade. Commit bloqueado." >&2
+  exit 1
+fi

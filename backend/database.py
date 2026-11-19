@@ -21,9 +21,10 @@ except ImportError:
     psycopg2 = None
 
 from backend.engine_secao10 import TABLE_SCHEMAS, process_table_secao10
+from backend.private_paths import private_path, ensure_private_directory
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "data")
+DATA_DIR = str(private_path('portal'))
 TREATED_EXPORT_DIR = os.path.join(DATA_DIR, "tratados")
 DB_PATH = os.path.join(DATA_DIR, "dfm_scm.db")
 PG_CONFIG_PATH = os.path.join(DATA_DIR, "pg_config.json")
@@ -39,8 +40,11 @@ DEFAULT_CSVS = {
 
 
 def get_conn() -> sqlite3.Connection:
-    os.makedirs(DATA_DIR, exist_ok=True)
-    os.makedirs(TREATED_EXPORT_DIR, exist_ok=True)
+    legacy = os.path.join(BASE_DIR, 'data', 'dfm_scm.db')
+    if os.path.isfile(legacy) and not os.path.exists(DB_PATH):
+        raise RuntimeError('Banco legado detectado. Execute scripts/migrar_armazenamento.py antes de iniciar o portal.')
+    ensure_private_directory(DATA_DIR)
+    ensure_private_directory(TREATED_EXPORT_DIR)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
@@ -67,7 +71,7 @@ def get_pg_config() -> Dict[str, Any]:
 
 
 def save_pg_config(new_cfg: Dict[str, Any]) -> Dict[str, Any]:
-    os.makedirs(DATA_DIR, exist_ok=True)
+    ensure_private_directory(DATA_DIR)
     cfg = get_pg_config()
     for k in ("enabled", "host", "port", "database", "user", "password", "schema"):
         if k in new_cfg and new_cfg[k] is not None:
@@ -331,8 +335,8 @@ def _build_typed_tuples(table_name: str, rows: List[List[str]]) -> List[tuple]:
             parsed.append((
                 int(r[0]) if str(r[0]).isdigit() else 2026,
                 r[1], r[2], r[3], r[4],
-                to_float_zero(r[5]),
-                to_float_zero(r[6]),
+                to_float_or_none(r[5]),
+                to_float_or_none(r[6]),
             ))
 
     elif table_name == "tb_custos_atividade":
@@ -546,9 +550,11 @@ def load_table_rows(
 
 
 def seed_initial_data_if_needed() -> None:
-    cleanup_temp_tratados()
     conn = get_conn()
     init_db_schema(conn)
+    if os.environ.get('SCM_SEED_LEGACY', '').lower() != 'true':
+        conn.close()
+        return
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM controle_atualizacao WHERE status = 'SUCESSO'")
     done_count = cur.fetchone()[0]

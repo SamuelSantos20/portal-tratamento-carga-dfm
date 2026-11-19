@@ -1,10 +1,46 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Secao10MotorView from './components/Secao10MotorView';
 import ControleGovernancaView from './components/ControleGovernancaView';
+import AssistenteIAView from './components/AssistenteIAView';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('carga');
   const [statusData, setStatusData] = useState(null);
+  const [session, setSession] = useState(null);
+  const [revision, setRevision] = useState(0);
+  const [sessionBusy, setSessionBusy] = useState(false);
+  const [sessionError, setSessionError] = useState('');
+  const [authorized, setAuthorized] = useState(false);
+  const authorizationPromise = useRef(null);
+  const currentSessionId = useRef(null);
+
+  async function refreshAnalysis() {
+    const expectedSession = currentSessionId.current;
+    try {
+      const response = await fetch(`/api/ai/session${expectedSession ? `?sessao_id=${expectedSession}` : ''}`, { cache: 'no-store' });
+      if (!response.ok) throw new Error('Falha ao abrir a sessão de análise. Recarregue a página.');
+      const data = await response.json();
+      if (currentSessionId.current && data.id !== currentSessionId.current) return;
+      currentSessionId.current = data.id;
+      setSession(data);
+      setRevision(value => value + 1);
+      setSessionError('');
+    } catch (error) { if (expectedSession === currentSessionId.current) setSessionError(error.message); }
+  }
+
+  async function newSession() {
+    setSessionBusy(true);
+    try {
+      const response = await fetch('/api/ai/sessions', { method: 'POST' });
+      if (!response.ok) throw new Error('Não foi possível criar a sessão.');
+      const data = await response.json();
+      currentSessionId.current = data.id;
+      setSession(data);
+      setRevision(value => value + 1);
+      setSessionError('');
+    } catch (error) { setSessionError(error.message); }
+    finally { setSessionBusy(false); }
+  }
 
   async function refreshMetadata() {
     try {
@@ -17,7 +53,28 @@ export default function App() {
   }
 
   useEffect(() => {
-    refreshMetadata();
+    let active = true;
+    async function authorize() {
+      const fragment = new URLSearchParams(window.location.hash.slice(1));
+      const key = fragment.get('acesso');
+      if (key) {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        const response = await fetch('/api/auth/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chave: key }) });
+        if (!response.ok) throw new Error('Acesso não autorizado. Abra o portal pelo inicializador local.');
+      } else {
+        const response = await fetch('/api/ai/status', { cache: 'no-store' });
+        if (!response.ok) throw new Error('Abra o portal pelo inicializador local para autorizar esta sessão.');
+      }
+    }
+    function beginAuthorization() {
+      if (!authorizationPromise.current || new URLSearchParams(window.location.hash.slice(1)).has('acesso')) authorizationPromise.current = authorize();
+      authorizationPromise.current.then(() => {
+        if (active) { setAuthorized(true); setSessionError(''); refreshMetadata(); refreshAnalysis(); }
+      }).catch(error => { if (active) setSessionError(error.message); });
+    }
+    beginAuthorization();
+    window.addEventListener('hashchange', beginAuthorization);
+    return () => { active = false; window.removeEventListener('hashchange', beginAuthorization); };
   }, []);
 
   const totalCarregados = Object.values(statusData?.table_counts || {}).reduce(
@@ -31,7 +88,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-[#F3F6FB] text-[#071D41]">
       {/* TOP BAR BRANCA — ESTILO PORTAL */}
       <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30">
-        <div className="max-w-[1340px] mx-auto px-6 h-[64px] flex items-center justify-between gap-4">
+        <div className="max-w-[1340px] mx-auto px-6 min-h-[64px] py-3 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="bg-[#EDF4FF] px-3 py-1.5 rounded-lg flex items-center gap-2 font-extrabold text-[15px] text-[#1351B4]">
               <svg width="28" height="12" viewBox="0 0 28 12" fill="none">
@@ -54,9 +111,9 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <span className="hidden md:inline-flex items-center gap-1.5 bg-[#E8F8EC] text-[#168821] text-[11px] font-bold px-3.5 py-1.5 rounded-full">
-              ● {pgEnabled ? `PostgreSQL (${statusData?.pg_config?.database}) + SQLite` : 'Banco de Dados Conectado'}
+              ● {!authorized ? 'Acesso local restrito' : !statusData ? 'Verificando banco local' : pgEnabled ? `PostgreSQL (${statusData?.pg_config?.database}) + SQLite` : 'SQLite local'}
             </span>
 
             <button
@@ -80,6 +137,7 @@ export default function App() {
             >
               BANCO DE DADOS (5 TABELAS)
             </button>
+            <button onClick={() => setActiveTab('ia')} className={`px-4 py-1.5 rounded-full text-[11px] font-bold transition-all ${activeTab === 'ia' ? 'bg-[#1351B4] text-white shadow-sm' : 'bg-[#EDF4FF] text-[#1351B4] hover:bg-blue-100'}`}>ASSISTENTE IA</button>
           </div>
         </div>
       </header>
@@ -131,18 +189,24 @@ export default function App() {
 
       {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 max-w-[1340px] w-full mx-auto px-6 py-7">
-        {activeTab === 'carga' ? (
+        {sessionError && <p role="alert" className="mb-4 rounded-xl bg-red-50 border border-red-200 text-red-700 p-3 text-sm">{sessionError}</p>}
+        {authorized && <><div className={activeTab === 'carga' ? '' : 'hidden'}>
           <Secao10MotorView
+            key={session?.id || 'loading'}
             statusData={statusData}
             onDatabaseUpdated={refreshMetadata}
             onOpenDatabaseTab={() => setActiveTab('banco')}
+            sessionId={session?.id}
+            onAnalysisUpdated={refreshAnalysis}
           />
-        ) : (
+        </div>
+        {activeTab === 'banco' && (
           <ControleGovernancaView
             statusData={statusData}
             onDatabaseUpdated={refreshMetadata}
           />
         )}
+        <div className={activeTab === 'ia' ? '' : 'hidden'}><AssistenteIAView session={session} revision={revision} onNewSession={newSession} sessionBusy={sessionBusy}/></div></>}
       </main>
 
       {/* RODAPÉ DISCRETO */}
