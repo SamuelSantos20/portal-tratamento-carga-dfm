@@ -67,7 +67,7 @@ TABLE_SCHEMAS: Dict[str, Dict[str, Any]] = {
             ("ug_responsavel", "ug_responsavel_nome"),
         ],
         "rule_title": "Arquivo 01 — dfm.tb_provisoes",
-        "rule_summary": "Separar pares de UG em código e nome + Quando UG Beneficiada estiver negativa/ausente/inválida, substituir pelos dados da UG Executora da mesma linha e conciliar as 9 medidas financeiras."
+        "rule_summary": "Responsável inválida recebe o par da Executora; manter Executora e copiar código e nome para Beneficiada. Conciliar as 9 medidas financeiras."
     },
     "tb_saldo_material_mb": {
         "file_code": "02",
@@ -410,6 +410,10 @@ def analyze_spreadsheet_structure(raw_rows: List[List[str]], filename: str = "")
         for k in ("mes_referencia", "ano_referencia", "mes_lancamento", "mmm_aaaa", "competencia", "referencia_mensal")
     )
 
+    if 'valor_dh' in norm_set and not has_mes_col and not mmm_aaaa_hits:
+        scores['tb_custos_atividade'] += 55
+        reasons['tb_custos_atividade'].append('Medida valor_dh identificada sem referencia mensal')
+
     if has_macro:
         if has_mes_col or mmm_aaaa_hits > 0:
             scores["tb_custos_atividade_mes"] += 90
@@ -450,7 +454,7 @@ def analyze_spreadsheet_structure(raw_rows: List[List[str]], filename: str = "")
     return {
         "detected_table": best_table,
         "file_code": TABLE_SCHEMAS[best_table]["file_code"],
-        "confidence_score": min(100, max(88, best_score)),
+        "confidence_score": min(100, max(0, best_score)),
         "header_row_index": header_idx + 1,
         "metadata_skipped": metadata_lines,
         "raw_headers": raw_headers,
@@ -471,6 +475,9 @@ def process_table_secao10(
         raise ValueError("O arquivo enviado está vazio.")
 
     structural_analysis = analyze_spreadsheet_structure(raw_rows, filename)
+    if not target_table or target_table == 'AUTO':
+        if structural_analysis['confidence_score'] < 40:
+            raise ValueError('Estrutura insuficiente para reconhecer a tabela. Selecione o arquivo de destino manualmente.')
     header_idx = structural_analysis["header_row_index"] - 1
     raw_headers = structural_analysis["raw_headers"]
     norm_headers = [normalize_col_name(c) for c in raw_headers]
@@ -554,28 +561,19 @@ def process_table_secao10(
                 row, ("ug_responsavel", "ugr", "ug_resp"), ("ug_responsavel_nome", "nome_ug_responsavel")
             )
 
-            if is_sentinel_ug(ug_ben, ug_ben_nome) and not is_sentinel_ug(ug_exec, ug_exec_nome):
-                old_ben = f"{ug_ben} ({ug_ben_nome})"
-                ug_ben, ug_ben_nome = ug_exec, ug_exec_nome
-                sentinel_replacements_count += 1
-                if len(sample_transformations) < 15:
-                    sample_transformations.append({
-                        "linha": r_idx,
-                        "regra": "tb_provisoes: UG Beneficiada <- UG Executora",
-                        "antes": old_ben,
-                        "depois": f"{ug_ben} ({ug_ben_nome})"
-                    })
-
-            if is_sentinel_ug(ug_exec, ug_exec_nome) and not is_sentinel_ug(ug_ben, ug_ben_nome):
-                ug_exec, ug_exec_nome = ug_ben, ug_ben_nome
-
-            if is_sentinel_ug(ug_emit, ug_emit_nome):
-                ug_emit, ug_emit_nome = ug_exec, ug_exec_nome
-
+            # A Executora original permanece. Codigo e nome sempre viajam juntos.
             if is_sentinel_ug(ug_resp, ug_resp_nome):
-                ug_resp, ug_resp_nome = ug_ben, ug_ben_nome
-
-            if is_sentinel_ug(ug_ben, ug_ben_nome):
+                if not is_sentinel_ug(ug_exec, ug_exec_nome) and ug_exec and ug_exec_nome:
+                    old_resp = f"{ug_resp} ({ug_resp_nome})"
+                    ug_resp, ug_resp_nome = ug_exec, ug_exec_nome
+                    sentinel_replacements_count += 1
+                    if len(sample_transformations) < 15:
+                        sample_transformations.append({'linha': r_idx, 'regra': 'tb_provisoes: UG Responsável <- UG Executora', 'antes': old_resp, 'depois': f'{ug_resp} ({ug_resp_nome})'})
+                else:
+                    validation_errors.append(f'Linha {r_idx}: Executora incompleta para corrigir a Responsável.')
+            ug_ben, ug_ben_nome = ug_exec, ug_exec_nome
+            if is_sentinel_ug(ug_ben, ug_ben_nome) or not ug_ben_nome:
+                validation_errors.append(f'Linha {r_idx}: Executora inválida para criar a Beneficiada.')
                 remaining_ug_sentinels += 1
 
             acao_gov, acao_gov_nome, _ = split_ug_cell(

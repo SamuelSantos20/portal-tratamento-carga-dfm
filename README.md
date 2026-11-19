@@ -2,6 +2,8 @@
 
 Sistema Web (FastAPI + React + PostgreSQL / SQLite) para recepção, reconhecimento estrutural automático, higienização de dados contábeis e carga transacional nas 5 tabelas do banco de dados (`schema dfm`).
 
+Inclui **Assistente IA local** para consultar arquivos analisados, totais e pendências da sessão, além de explicar regras com o classificador próprio instalado privadamente. Dados, pesos e conteúdo privado do manual ficam fora do Git. Consulte [instalação e limites da IA local](docs/IA_LOCAL.md).
+
 ## Tabelas Alvo Suportadas (`schema dfm`)
 
 | Código | Arquivo / Planilha | Tabela no Banco (`PostgreSQL / SQLite`) |
@@ -38,10 +40,10 @@ Sistema Web (FastAPI + React + PostgreSQL / SQLite) para recepção, reconhecime
 
 ### 1. Backend (FastAPI)
 ```bash
-python -m venv .venv
+py -3.12 -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn backend.main:app --reload --port 8000
+python scripts/iniciar_local.py
 ```
 
 ### 2. Frontend (React + Vite)
@@ -51,4 +53,6 @@ npm install
 npm run dev
 ```
 
-Ou clique duas vezes em `iniciar_sistema.bat` no Windows.
+Para usar tudo no mesmo endereço, execute `npm run build` em `frontend` e clique duas vezes em `iniciar_sistema.bat` no Windows. O inicializador abre uma sessão autorizada em `http://127.0.0.1:8082`; as APIs exigem essa autorização local. Na interface de desenvolvimento, abra primeiro pelo inicializador e depois use a mesma máquina e hostname no Vite.
+
+Banco, histórico e exportações são gravados na área privada do operador, fora do repositório. Instalações com banco antigo em `data/` devem seguir o procedimento de migração em [IA_LOCAL.md](docs/IA_LOCAL.md). Para habilitar o classificador, instale as dependências opcionais e configure os pesos conforme esse documento; as consultas estruturadas de sessão funcionam sem eles.

@@ -45,6 +45,8 @@ export default function Secao10MotorView({
   statusData,
   onDatabaseUpdated,
   onOpenDatabaseTab,
+  sessionId,
+  onAnalysisUpdated,
 }) {
   const [step, setStep] = useState(1);
   const [targetTable, setTargetTable] = useState('AUTO');
@@ -61,6 +63,7 @@ export default function Secao10MotorView({
   // Etapa 1 -> Etapa 2: Trata a planilha e exibe a prévia
   async function handleFileUpload(file) {
     if (!file) return;
+    if (!sessionId) { setError('Aguarde a abertura da sessão de análise.'); return; }
     setLoading(true);
     setError(null);
     try {
@@ -68,6 +71,7 @@ export default function Secao10MotorView({
       formData.append('file', file);
       formData.append('target_table', targetTable);
       formData.append('apply_to_db', 'false');
+      formData.append('session_id', sessionId);
 
       const res = await fetch('/api/secao10/process', {
         method: 'POST',
@@ -78,6 +82,7 @@ export default function Secao10MotorView({
         throw new Error(data.detail || 'Falha ao tratar a planilha.');
       }
       setResult(data);
+      onAnalysisUpdated?.();
       setStep(2);
     } catch (err) {
       setError(err.message);
@@ -88,10 +93,11 @@ export default function Secao10MotorView({
 
   // Simulação com 1 clique para testar qualquer uma das 5 tabelas
   async function handleSimulateTable(tableName) {
+    if (!sessionId) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/secao10/simulate/${tableName}`, {
+      const res = await fetch(`/api/secao10/simulate/${tableName}?session_id=${sessionId}`, {
         method: 'POST',
       });
       const data = await res.json();
@@ -99,6 +105,7 @@ export default function Secao10MotorView({
         throw new Error(data.detail || 'Falha ao simular planilha.');
       }
       setResult(data);
+      onAnalysisUpdated?.();
       setStep(2);
     } catch (err) {
       setError(err.message);
@@ -113,7 +120,7 @@ export default function Secao10MotorView({
     setCommitting(true);
     setError(null);
     try {
-      const res = await fetch(`/api/secao10/commit/${result.table_name}`, {
+      const res = await fetch(`/api/secao10/commit/${result.table_name}?session_id=${sessionId}`, {
         method: 'POST',
       });
       const data = await res.json();
@@ -121,6 +128,7 @@ export default function Secao10MotorView({
         throw new Error(data.detail || 'Falha ao gravar no banco de dados.');
       }
       setCommitData(data);
+      onAnalysisUpdated?.();
       setStep(3);
       if (onDatabaseUpdated) {
         onDatabaseUpdated();
@@ -469,10 +477,11 @@ export default function Secao10MotorView({
       {step === 2 && result && (
         <div className="w-full max-w-[1120px] bg-white border-[1.5px] border-[#E2E8F0] rounded-[20px] p-8 sm:p-10 space-y-7">
           {/* Topo: Arquivo + Destino + Botão Verde de Confirmação */}
+          {result.validation_errors?.length > 0 && <div role="alert" className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">{result.validation_errors.map((error, index) => <p key={index}>{error}</p>)}</div>}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h2 className="text-[22px] font-extrabold text-[#071D41]">
-                Planilha tratada e pronta para envio
+                {result.status === 'SUCESSO' ? 'Planilha tratada e pronta para envio' : 'Revise as pendências antes do envio'}
               </h2>
               <p className="text-[13px] font-semibold text-[#1351B4] mt-1">
                 Arquivo: {result.filename} ➔ Destino: Base {result.file_code} ({result.short_name} •{' '}
@@ -491,7 +500,7 @@ export default function Secao10MotorView({
 
               <button
                 type="button"
-                disabled={committing}
+                disabled={committing || result.status !== 'SUCESSO'}
                 onClick={handleConfirmCommit}
                 className="px-7 py-3.5 rounded-full bg-[#168821] hover:bg-[#126e1a] text-white text-sm font-extrabold shadow-sm transition-transform hover:-translate-y-0.5 disabled:opacity-60"
               >

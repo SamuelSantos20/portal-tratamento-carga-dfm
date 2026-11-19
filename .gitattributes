@@ -1,0 +1,5 @@
+.githooks/* text eol=lf
+*.py text eol=lf
+*.jsx text eol=lf
+*.yml text eol=lf
+*.bat text eol=crlf

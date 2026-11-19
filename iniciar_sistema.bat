@@ -4,6 +4,9 @@ echo ===========================================================================
 echo   DFM - SISTEMA DE TRATAMENTO (SECAO 10) E PAINEL DE CUSTOS - SCM MARINHA
 echo ============================================================================
 cd /d "%~dp0"
-start "" "http://127.0.0.1:8082"
-.\.venv\Scripts\python.exe -m uvicorn backend.main:app --host 127.0.0.1 --port 8082
+if exist ".\.venv\Scripts\python.exe" (
+  .\.venv\Scripts\python.exe scripts\iniciar_local.py
+) else (
+  "%LOCALAPPDATA%\SCM-Confidencial\runtime\portal-venv\Scripts\python.exe" scripts\iniciar_local.py
+)
 pause
