@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Protótipo Exportado — Sistema de Tratamento e Carga de Planilhas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gov-bg-canvas: #F3F6FB;
+      --gov-bg-white: #FFFFFF;
+      --gov-bg-navy-deep: #071D41;
+      --gov-bg-blue-primary: #1351B4;
+      --gov-bg-blue-soft: #EDF4FF;
+      --gov-bg-yellow: #FFCD07;
+      --gov-bg-yellow-soft: #FFFBEB;
+      --gov-bg-green: #168821;
+      --gov-bg-green-soft: #E8F8EC;
+      --gov-bg-subtle: #F8FAFC;
+      --gov-text-dark: #071D41;
+      --gov-text-body: #334155;
+      --gov-text-muted: #64748B;
+      --gov-text-blue: #1351B4;
+      --gov-text-green: #168821;
+      --gov-border-light: #E2E8F0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--gov-bg-canvas);
+      color: var(--gov-text-dark);
+      min-height: 100vh;
+    }
+
+    /* Top bar */
+    .top-bar {
+      background: var(--gov-bg-white);
+      height: 62px;
+      padding: 0 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .portal-badge {
+      background: var(--gov-bg-blue-soft);
+      padding: 6px 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 15px;
+      color: var(--gov-text-blue);
+    }
+
+    .divider {
+      width: 1.5px;
+      height: 22px;
+      background: var(--gov-bg-blue-soft);
+    }
+
+    .org-titles small {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--gov-text-muted);
+      letter-spacing: 0.03em;
+    }
+
+    .org-titles strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gov-text-dark);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chip-green {
+      background: var(--gov-bg-green-soft);
+      color: var(--gov-text-green);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 7px 14px;
+      border-radius: 20px;
+    }
+
+    .chip-blue {
+      background: var(--gov-bg-blue-primary);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 7px 14px;
+      border-radius: 20px;
+    }
+
+    /* Hero Banner */
+    .hero-banner {
+      position: relative;
+      height: 148px;
+      background: linear-gradient(100deg, #071D41 0%, #0C326F 55%, #1351B4 100%);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      padding: 0 64px;
+    }
+
+    .hero-svg-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      background: var(--gov-bg-yellow);
+      color: var(--gov-text-dark);
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+
+    .hero-content h1 {
+      color: #fff;
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .hero-content p {
+      color: rgba(255,255,255,0.92);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* Main Container */
+    .main-container {
+      max-width: 1312px;
+      margin: 0 auto;
+      padding: 28px 0 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    /* Stepper */
+    .stepper {
+      background: var(--gov-bg-white);
+      border: 1.5px solid var(--gov-border-light);
+      border-radius: 50px;
+      padding: 12px 20px;
+      display: inline-flex;
+      gap: 14px;
+      box-shadow: 0 2px 8px rgba(7, 29, 65, 0.04);
+    }
+
+    .step-btn {
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 9px 20px;
+      border-radius: 30px;
+      background: var(--gov-bg-subtle);
+      color: var(--gov-text-muted);
+      transition: all 0.2s;
+    }
+
+    .step-btn.active {
+      background: var(--gov-bg-blue-primary);
+      color: #fff;
+    }
+
+    .step-btn.done {
+      background: var(--gov-bg-green-soft);
+      color: var(--gov-text-green);
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    /* Screen 1 Split Grid */
+    .split-grid {
+      display: grid;
+      grid-template-columns: 780px 1fr;
+      gap: 28px;
+      width: 100%;
+    }
+
+    .card {
+      background: var(--gov-bg-white);
+      border: 1.5px solid var(--gov-border-light);
+      border-radius: 20px;
+      padding: 36px 40px;
+    }
+
+    .dropzone {
+      margin-top: 24px;
+      background: var(--gov-bg-blue-soft);
+      border: 2px solid var(--gov-bg-blue-primary);
+      border-radius: 16px;
+      padding: 40px 32px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .dropzone h2 {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .dropzone p {
+      font-size: 13px;
+      color: var(--gov-text-body);
+    }
+
+    .btn-pill {
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 13px 28px;
+      border-radius: 40px;
+      transition: transform 0.15s;
+    }
+
+    .btn-pill:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--gov-bg-blue-primary);
+      color: #fff;
+    }
+
+    .btn-green {
+      background: var(--gov-bg-green);
+      color: #fff;
+    }
+
+    .btn-soft {
+      background: var(--gov-bg-blue-soft);
+      color: var(--gov-text-blue);
+    }
+
+    /* Right column bases list */
+    .bases-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .base-item {
+      background: var(--gov-bg-subtle);
+      border: 1px solid var(--gov-border-light);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .base-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .num-badge {
+      background: var(--gov-bg-blue-soft);
+      color: var(--gov-text-blue);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 5px 9px;
+      border-radius: 8px;
+    }
+
+    /* Screen 2 */
+    .card-wide {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .top-row-2 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .top-row-2 h2 {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .top-row-2 p {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gov-text-blue);
+    }
+
+    .kpi-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .kpi-box {
+      border-radius: 16px;
+      padding: 22px 24px;
+    }
+
+    .kpi-box small {
+      display: block;
+      font-size: 11px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .kpi-box strong {
+      display: block;
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .kpi-box span {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .sample-row {
+      background: var(--gov-bg-subtle);
+      border: 1px solid var(--gov-border-light);
+      border-radius: 12px;
+      padding: 13px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .mono-val {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--gov-text-blue);
+    }
+
+    /* Screen 3 */
+    .card-receipt {
+      max-width: 860px;
+      margin: 0 auto;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      padding: 48px 56px;
+    }
+
+    .receipt-box {
+      background: var(--gov-bg-subtle);
+      border: 1.5px solid var(--gov-border-light);
+      border-radius: 16px;
+      padding: 20px 32px;
+      display: flex;
+      gap: 40px;
+      text-align: left;
+    }
+
+    .receipt-col small {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--gov-text-muted);
+      margin-bottom: 4px;
+    }
+
+    .receipt-col strong {
+      font-size: 15px;
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <header class="top-bar">
+    <div class="brand-left">
+      <div class="portal-badge">
+        <svg width="28" height="12" viewBox="0 0 28 12" fill="none">
+          <circle cx="5" cy="6" r="4.5" fill="#1351B4"/>
+          <circle cx="14" cy="6" r="4.5" fill="#FFCD07"/>
+          <circle cx="23" cy="6" r="4.5" fill="#168821"/>
+        </svg>
+        PORTAL
+      </div>
+      <div class="divider"></div>
+      <div class="org-titles">
+        <small>PLATAFORMA DE INTEGRAÇÃO E GOVERNANÇA DE DADOS</small>
+        <strong>Sistema de Tratamento e Carga de Planilhas</strong>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="chip-green">● Banco de Dados Conectado</span>
+      <span class="chip-blue">PAINEL DE CARGA</span>
+    </div>
+  </header>
+
+  <!-- HERO BANNER -->
+  <section class="hero-banner">
+    <svg class="hero-svg-bg" viewBox="0 0 1440 148" fill="none" preserveAspectRatio="none">
+      <path d="M820 148 C940 30, 1120 10, 1440 80 L1440 148 Z" fill="#1351B4" fill-opacity="0.55"/>
+      <path d="M960 0 C1080 120, 1240 130, 1440 30 L1440 0 Z" fill="#38BDF8" fill-opacity="0.18"/>
+      <circle cx="1280" cy="74" r="110" stroke="#FFCD07" stroke-width="2" stroke-opacity="0.35"/>
+      <circle cx="1280" cy="74" r="70" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.2" stroke-dasharray="4 4"/>
+      <path d="M1050 148 Q 1180 40 1380 148" stroke="#FFCD07" stroke-width="3" stroke-opacity="0.65" fill="none"/>
+      <path d="M1140 148 Q 1250 70 1420 148" stroke="#168821" stroke-width="4" stroke-opacity="0.7" fill="none"/>
+      <rect x="0" y="144" width="900" height="4" fill="#1351B4"/>
+      <rect x="900" y="144" width="340" height="4" fill="#FFCD07"/>
+      <rect x="1240" y="144" width="200" height="4" fill="#168821"/>
+    </svg>
+    <div class="hero-content">
+      <span class="hero-tag">PROCESSAMENTO E CONCILIAÇÃO AUTOMÁTICA</span>
+      <h1>Central de Tratamento e Envio de Planilhas</h1>
+      <p>Higienização automática de dados contábeis e sincronização direta com o banco de dados</p>
+    </div>
+  </section>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="main-container">
+    <!-- STEPPER (Clique para alternar entre as 3 telas) -->
+    <nav class="stepper">
+      <button id="tab-1" class="step-btn active" onclick="showStep(1)">1. Importar Planilha</button>
+      <button id="tab-2" class="step-btn" onclick="showStep(2)">2. Tratamento Automático</button>
+      <button id="tab-3" class="step-btn" onclick="showStep(3)">3. Enviado ao Banco</button>
+    </nav>
+
+    <!-- TELA 1: IMPORTAR PLANILHA -->
+    <div id="screen-1" class="screen active">
+      <div class="split-grid">
+        <div class="card">
+          <svg width="100%" height="84" viewBox="0 0 700 84" fill="none">
+            <rect width="700" height="84" rx="14" fill="#F8FAFC"/>
+            <circle cx="115" cy="42" r="22" fill="#EDF4FF" stroke="#1351B4" stroke-width="1.5"/>
+            <rect x="107" y="34" width="16" height="16" rx="2" stroke="#1351B4" stroke-width="1.8"/>
+            <line x1="111" y1="39" x2="119" y2="39" stroke="#1351B4" stroke-width="1.5"/>
+            <line x1="111" y1="44" x2="119" y2="44" stroke="#1351B4" stroke-width="1.5"/>
+            <path d="M160 42 H300" stroke="#1351B4" stroke-width="2" stroke-dasharray="4 4"/>
+            <circle cx="230" cy="42" r="4" fill="#FFCD07"/>
+            <circle cx="350" cy="42" r="24" fill="#FFFBEB" stroke="#FFCD07" stroke-width="2"/>
+            <path d="M350 30 L353 39 L362 42 L353 45 L350 54 L347 45 L338 42 L347 39 Z" fill="#1351B4"/>
+            <path d="M400 42 H540" stroke="#168821" stroke-width="2" stroke-dasharray="4 4"/>
+            <circle cx="470" cy="42" r="4" fill="#168821"/>
+            <circle cx="585" cy="42" r="22" fill="#E8F8EC" stroke="#168821" stroke-width="1.5"/>
+            <ellipse cx="585" cy="36" rx="9" ry="4" stroke="#168821" stroke-width="1.8"/>
+            <path d="M576 36 V48 C576 50 594 50 594 48 V36" stroke="#168821" stroke-width="1.8"/>
+          </svg>
+
+          <div class="dropzone" onclick="showStep(2)">
+            <svg width="88" height="72" viewBox="0 0 88 72" fill="none">
+              <rect x="14" y="10" width="48" height="54" rx="8" fill="#FFFFFF" stroke="#1351B4" stroke-width="2"/>
+              <rect x="22" y="20" width="14" height="8" rx="2" fill="#EDF4FF"/>
+              <rect x="40" y="20" width="14" height="8" rx="2" fill="#EDF4FF"/>
+              <rect x="22" y="32" width="14" height="8" rx="2" fill="#EDF4FF"/>
+              <rect x="40" y="32" width="14" height="8" rx="2" fill="#FFFBEB"/>
+              <rect x="22" y="44" width="32" height="8" rx="2" fill="#E8F8EC"/>
+              <circle cx="62" cy="48" r="18" fill="#1351B4"/>
+              <path d="M62 55V41M62 41L56 47M62 41L68 47" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="20" cy="14" r="6" fill="#FFCD07"/>
+            </svg>
+            <h2>Arraste a planilha para cá ou selecione do computador</h2>
+            <p>O sistema identifica o modelo (.CSV ou .XLSX), limpa linhas de total e envia ao banco.</p>
+            <button class="btn-pill btn-primary">Selecionar Planilha no Computador</button>
+          </div>
+        </div>
+
+        <div class="card" style="padding: 28px;">
+          <h3 style="font-size: 15px; font-weight: 800;">Bases do Banco de Dados (Reconhecimento Automático)</h3>
+          <div class="bases-list">
+            <div class="base-item"><div class="base-left"><span class="num-badge">01</span>Provisões Recebidas</div><span class="chip-green">✓ 18.420 registros</span></div>
+            <div class="base-item"><div class="base-left"><span class="num-badge">02</span>Custos Liquidados por UGR</div><span class="chip-green">✓ 24.915 registros</span></div>
+            <div class="base-item"><div class="base-left"><span class="num-badge">03</span>Custos por Atividade</div><span class="chip-green">✓ 31.640 registros</span></div>
+            <div class="base-item"><div class="base-left"><span class="num-badge">04</span>Custos Mensais por Atividade</div><span class="chip-green">✓ 28.110 registros</span></div>
+            <div class="base-item"><div class="base-left"><span class="num-badge">05</span>Saldo de Material e Patrimônio</div><span class="chip-green">✓ 1.381 registros</span></div>
+            <div class="base-item"><div class="base-left"><span class="num-badge">06</span>Documentos Hábeis (SIORG)</div><span class="chip-green">✓ 38.384 registros</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TELA 2: CONFERIR TRATAMENTO -->
+    <div id="screen-2" class="screen">
+      <div class="card card-wide">
+        <div class="top-row-2">
+          <div>
+            <h2>Planilha tratada e pronta para envio</h2>
+            <p>Arquivo: 03_Custos_por_Atividade_2026.csv ➔ Destino: Base 03 (Custos por Atividade)</p>
+          </div>
+          <button class="btn-pill btn-green" onclick="showStep(3)">✓ Confirmar e Enviar para o Banco</button>
+        </div>
+
+        <div class="kpi-grid-3">
+          <div class="kpi-box" style="background: var(--gov-bg-subtle); border: 1.5px solid var(--gov-border-light);">
+            <small style="color: var(--gov-text-muted);">1. ARQUIVO BRUTO</small>
+            <strong>31.642 linhas</strong>
+            <span style="color: var(--gov-text-muted);">2 linhas de totalizador removidas</span>
+          </div>
+          <div class="kpi-box" style="background: var(--gov-bg-blue-soft); border: 1.5px solid var(--gov-bg-blue-primary);">
+            <small style="color: var(--gov-text-blue);">2. LIMPEZA AUTOMÁTICA</small>
+            <strong style="color: var(--gov-text-blue);">100% Higienizado</strong>
+            <span>Códigos de UG separados e valores formatados</span>
+          </div>
+          <div class="kpi-box" style="background: var(--gov-bg-green-soft); border: 1.5px solid var(--gov-bg-green);">
+            <small style="color: var(--gov-text-green);">3. VALOR CONCILIADO</small>
+            <strong style="color: var(--gov-text-green);">R$ 1,24 Bilhão</strong>
+            <span>31.640 registros válidos • Diferença R$ 0,00</span>
+          </div>
+        </div>
+
+        <h4 style="font-size: 13px; font-weight: 700;">Amostra dos dados prontos para entrar no banco:</h4>
+        <div class="sample-row">
+          <span>UG 781000 • UNIDADE GESTORA REGIONAL 01</span>
+          <span style="color: var(--gov-text-muted); font-size: 12px;">OPERAÇÕES E LOGÍSTICA</span>
+          <span class="mono-val">R$ 1.482.910,45</span>
+        </div>
+        <div class="sample-row">
+          <span>UG 740000 • CENTRO DE MANUTENÇÃO E SUPORTE</span>
+          <span style="color: var(--gov-text-muted); font-size: 12px;">MANUTENÇÃO E REPARO</span>
+          <span class="mono-val">R$ 4.890.120,00</span>
+        </div>
+        <div class="sample-row">
+          <span>UG 765000 • UNIDADE DE ATENDIMENTO E GESTÃO</span>
+          <span style="color: var(--gov-text-muted); font-size: 12px;">ATENDIMENTO E SERVIÇOS</span>
+          <span class="mono-val">R$ 2.150.840,90</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TELA 3: COMPROVANTE DE CARGA -->
+    <div id="screen-3" class="screen">
+      <div class="card card-receipt">
+        <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
+          <circle cx="44" cy="44" r="42" stroke="#1351B4" stroke-width="1.5" stroke-dasharray="4 4" stroke-opacity="0.4"/>
+          <circle cx="44" cy="44" r="34" fill="#E8F8EC" stroke="#168821" stroke-width="2"/>
+          <path d="M31 44.5L40 53.5L58 35.5" stroke="#168821" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="72" cy="20" r="7" fill="#FFCD07"/>
+        </svg>
+
+        <div>
+          <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 6px;">Planilha enviada para o banco com sucesso!</h2>
+          <p style="font-size: 14px; color: var(--gov-text-muted);">Os dados da Base 03 (Custos por Atividade) já estão atualizados para consulta.</p>
+        </div>
+
+        <div class="receipt-box">
+          <div class="receipt-col"><small>BASE ATUALIZADA</small><strong>Custos por Atividade</strong></div>
+          <div class="receipt-col"><small>REGISTROS SALVOS</small><strong>31.640 linhas</strong></div>
+          <div class="receipt-col"><small>VALOR TOTAL</small><strong>R$ 1,24 Bilhão</strong></div>
+          <div class="receipt-col"><small>PROTOCOLO DE CARGA</small><strong>2026NL000482</strong></div>
+        </div>
+
+        <div style="display: flex; gap: 16px;">
+          <button class="btn-pill btn-primary" onclick="showStep(1)">Enviar Outra Planilha</button>
+          <button class="btn-pill btn-soft">Baixar Planilha Tratada (.CSV)</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function showStep(step) {
+      for (let i = 1; i <= 3; i++) {
+        document.getElementById('screen-' + i).classList.toggle('active', i === step);
+        const tab = document.getElementById('tab-' + i);
+        tab.className = 'step-btn' + (i === step ? ' active' : (i < step ? ' done' : ''));
+        const labels = ['1. Importar Planilha', '2. Tratamento Automático', '3. Enviado ao Banco'];
+        tab.textContent = (i < step ? '✓ ' : '') + labels[i - 1];
+      }
+    }
+  </script>
+</body>
+</html>

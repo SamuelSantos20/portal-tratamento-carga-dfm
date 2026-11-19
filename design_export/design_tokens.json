@@ -1,0 +1,32 @@
+{
+  "project": "Sistema de Tratamento e Carga de Planilhas",
+  "figmaFileKey": "NyayzvCimEmenjypTTLKUF",
+  "figmaUrl": "https://www.figma.com/design/NyayzvCimEmenjypTTLKUF",
+  "typography": {
+    "primaryFont": "Plus Jakarta Sans",
+    "monospaceFont": "JetBrains Mono"
+  },
+  "colors": {
+    "gov/bg-canvas": "#F3F6FB",
+    "gov/bg-white": "#FFFFFF",
+    "gov/bg-navy-deep": "#071D41",
+    "gov/bg-blue-primary": "#1351B4",
+    "gov/bg-blue-soft": "#EDF4FF",
+    "gov/bg-yellow": "#FFCD07",
+    "gov/bg-yellow-soft": "#FFFBEB",
+    "gov/bg-green": "#168821",
+    "gov/bg-green-soft": "#E8F8EC",
+    "gov/bg-subtle": "#F8FAFC",
+    "gov/text-dark": "#071D41",
+    "gov/text-body": "#334155",
+    "gov/text-muted": "#64748B",
+    "gov/text-blue": "#1351B4",
+    "gov/text-green": "#168821",
+    "gov/text-yellow": "#FFCD07",
+    "gov/text-white": "#FFFFFF",
+    "gov/border-light": "#E2E8F0",
+    "gov/border-blue": "#1351B4",
+    "gov/border-green": "#168821",
+    "gov/border-yellow": "#FFCD07"
+  }
+}

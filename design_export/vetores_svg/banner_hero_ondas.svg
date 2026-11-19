@@ -1,0 +1,19 @@
+<svg width="1440" height="148" viewBox="0 0 1440 148" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="govGrad" x1="0" y1="0" x2="1440" y2="148" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#071D41"/>
+      <stop offset="55%" stop-color="#0C326F"/>
+      <stop offset="100%" stop-color="#1351B4"/>
+    </linearGradient>
+  </defs>
+  <rect width="1440" height="148" fill="url(#govGrad)"/>
+  <path d="M820 148 C940 30, 1120 10, 1440 80 L1440 148 Z" fill="#1351B4" fill-opacity="0.55"/>
+  <path d="M960 0 C1080 120, 1240 130, 1440 30 L1440 0 Z" fill="#38BDF8" fill-opacity="0.18"/>
+  <circle cx="1280" cy="74" r="110" stroke="#FFCD07" stroke-width="2" stroke-opacity="0.35"/>
+  <circle cx="1280" cy="74" r="70" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.2" stroke-dasharray="4 4"/>
+  <path d="M1050 148 Q 1180 40 1380 148" stroke="#FFCD07" stroke-width="3" stroke-opacity="0.65" fill="none"/>
+  <path d="M1140 148 Q 1250 70 1420 148" stroke="#168821" stroke-width="4" stroke-opacity="0.7" fill="none"/>
+  <rect x="0" y="144" width="900" height="4" fill="#1351B4"/>
+  <rect x="900" y="144" width="340" height="4" fill="#FFCD07"/>
+  <rect x="1240" y="144" width="200" height="4" fill="#168821"/>
+</svg>

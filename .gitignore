@@ -1,0 +1,23 @@
+# Python / Virtual Environment
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Local Database & Sensitive Config
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/pg_config.json
+data/tratados/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
