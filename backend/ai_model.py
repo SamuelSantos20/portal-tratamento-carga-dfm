@@ -109,7 +109,7 @@ class LocalModel:
                 worker_environment['OMP_NUM_THREADS'] = '2'
                 worker_environment['MKL_NUM_THREADS'] = '2'
                 self.process = subprocess.Popen(
-                    [sys.executable, '-I', '-u', str(Path(__file__).with_name('ai_worker.py')), str(manifest)],
+                    [sys.executable, '-I', '-B', '-u', str(Path(__file__).with_name('ai_worker.py')), str(manifest)],
                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                     text=True, encoding='utf-8', bufsize=1,
                     env=worker_environment,

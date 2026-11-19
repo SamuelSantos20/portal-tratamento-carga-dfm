@@ -10,7 +10,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from backend.ai_model import REQUIRED_CODE, validate_manifest
-from backend.private_paths import private_path, private_root
+from backend.private_paths import private_path, private_root, ensure_private_directory
 
 def configure(source, base):
     source, base = Path(source).resolve(), Path(base).resolve()
@@ -31,7 +31,7 @@ def configure(source, base):
     runtime = private_path('runtime', 'ia_scm')
     if runtime.exists():
         raise FileExistsError('Runtime privado ja existe; preserve-o antes de configurar outra versao.')
-    runtime.mkdir(parents=True, mode=0o700)
+    ensure_private_directory(runtime)
     for path in sources:
         shutil.copy2(path, runtime / path.name)
     files = [runtime / p.name for p in sources] + model_files
